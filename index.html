@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>조성인쌤의 한글 맞춤법 낱말 퍼즐</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#172033;font-family:system-ui,-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif}
+.wrap{max-width:1180px;margin:auto;padding:22px 14px 50px}h1{margin:0;font-size:30px}.desc{color:#687086;margin:6px 0 20px}
+.board{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.case{background:#fff;border:1px solid #dbe0ec;border-radius:18px;padding:16px;min-height:215px;box-shadow:0 5px 18px #24335b0b}
+.case h2{font-size:16px;margin:0 0 7px;color:#3659d9}.case p{font-weight:800;line-height:1.45;margin:0 0 11px}
+.rule{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:9px 0 13px;font-size:14px;font-weight:750}
+.choice{border:1px solid #c8cfdf;background:#f8f9fc;border-radius:9px;padding:7px 10px;font-weight:800;cursor:pointer}
+.choice.good{background:#e8f7ef;border-color:#51a878;color:#126c3e}.choice.bad{background:#fff0f0;border-color:#dd6b6b;color:#a42d2d}
+.msg{min-height:20px;font-size:13px;font-weight:850}.msg.ok{color:#15804a}.msg.no{color:#bd3030}
+.slots{display:flex;gap:7px;flex-wrap:wrap;min-height:58px}
+.slot{width:78px;height:46px;border:2px dashed #b8c2da;border-radius:11px;background:#fafbff;display:flex;align-items:center;justify-content:center}
+.slot.filled{border-style:solid;border-color:#9aa8c9;background:#f2f5ff}
+.bankbox{position:sticky;bottom:0;margin-top:18px;background:#eef1f8ef;backdrop-filter:blur(8px);border:1px solid #d5dbea;border-radius:18px;padding:14px;box-shadow:0 -5px 25px #24335b14}
+.bankhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.bank{display:flex;gap:8px;flex-wrap:wrap;max-height:220px;overflow:auto}
+.word{background:white;border:1px solid #c8cfdf;border-radius:10px;padding:9px 13px;font-weight:800;cursor:grab;user-select:none;touch-action:manipulation}.word:active{transform:scale(.97)}
+.actions{display:flex;gap:8px}.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}.primary{background:#3659d9;color:#fff}.secondary{background:#dfe4ef;color:#27324c}
+.result{margin-top:15px;padding:14px;border-radius:14px;display:none;font-weight:750;line-height:1.55}.okbox{display:block;background:#e8f7ef;color:#116c3c}.badbox{display:block;background:#fff0f0;color:#a42d2d}
+.case.correct{border:2px solid #35a365}.case.wrong{border:2px solid #db5959}.small{font-size:12px;color:#6b7280}
+.shake{animation:shake .32s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#b92e2e;color:#fff;
+padding:13px 22px;border-radius:12px;font-weight:900;z-index:9999;box-shadow:0 8px 30px #0003;pointer-events:none}
+@media(max-width:760px){
+ body{padding-bottom:190px}
+ .wrap{padding:10px 8px 30px}
+ h1{font-size:19px}
+ .desc{font-size:12px;line-height:1.4;margin:4px 2px 10px}
+ .board{grid-template-columns:1fr;gap:7px}
+ .case{padding:10px;min-height:0;border-radius:12px}
+ .case h2{font-size:12px;margin-bottom:3px}
+ .case p{font-size:13px;line-height:1.3;margin-bottom:5px}
+ .rule{font-size:11px;margin:4px 0 6px;gap:4px}
+ .choice{font-size:11px;padding:5px 7px;border-radius:7px}
+ .msg{min-height:14px;font-size:10px}
+ .slots{gap:4px;min-height:36px}
+ .slot{width:52px;height:34px;border-radius:7px}
+ .word{font-size:12px;padding:7px 9px;border-radius:7px}
+ .bankbox{
+   position:fixed;left:0;right:0;bottom:0;z-index:1000;
+   margin:0;border-radius:14px 14px 0 0;padding:8px 10px;
+   background:#eef1f8f7;box-shadow:0 -5px 22px #0002
+ }
+ .bankhead{margin-bottom:6px;font-size:12px}
+ .bank{display:flex;flex-direction:column;align-content:flex-start;gap:5px;
+   height:130px;overflow-x:auto;overflow-y:hidden}
+ .bank .word{width:max-content;min-width:54px;text-align:center}
+ .btn{font-size:11px;padding:7px 9px}
+ .toast{font-size:14px;padding:10px 16px}
+}
+</style></head>
+<body><div class="wrap">
+<h1>한글 맞춤법 낱말 분류 퍼즐</h1>
+<div class="desc">① 각 CASE의 표기 원칙을 고르세요. ② 모바일에서는 아래 낱말을 누른 뒤 원하는 CASE를 누르면 됩니다. 드래그할 필요가 없습니다.</div>
+<div id="board" class="board"></div>
+<div class="bankbox"><div class="bankhead"><div><b>낱말 카드</b> <span class="small" id="left"></span></div>
+<div class="actions"><button class="btn secondary" id="reset">초기화</button></div></div>
+<div id="bank" class="bank"></div></div><div id="result" class="result"></div>
+</div>
+<script>
+const groups=[
+{id:"g1",title:"CASE 1",q:"어간에 ‘-이’가 붙어서 명사로 된 것",words:["길이","깊이","다듬이","먹이","미닫이","목걸이"],rule:true},
+{id:"g2",title:"CASE 2",q:"어간에 ‘-음/-ㅁ’이 붙어서 명사로 된 것",words:["걸음","묶음","믿음","얼음","울음","죽음","앎"],rule:true},
+{id:"g3",title:"CASE 3",q:"‘-이’, ‘-음/-ㅁ’이 붙어 명사가 되었더라도 원뜻에서 멀어진 것",words:["노름","거름","무녀리","목거리","고름"],rule:false},
+{id:"g4",title:"CASE 4",q:"어간에 ‘-이’가 붙어서 부사가 된 것",words:["길이","깊이","같이","굳이","많이","좋이"],rule:true},
+{id:"g5",title:"CASE 5",q:"어간에 ‘-히’가 붙어서 부사가 된 것",words:["밝히","익히","작히"],rule:true},
+{id:"g6",title:"CASE 6",q:"‘-이’, ‘-음/-ㅁ’ 외의 것이 붙어서 명사로 바뀐 것",words:["마감","마개","마중","무덤","주검"],rule:false},
+{id:"g7",title:"CASE 7",q:"‘-이’, ‘-히’ 외의 것이 붙어서 부사로 바뀐 것",words:["너무","도로","자주","차마"],rule:false},
+{id:"g8",title:"CASE 8",q:"‘-이’, ‘-음/-ㅁ’, ‘-히’ 외의 것이 붙어서 조사로 바뀐 것",words:["나마","부터","조차"],rule:false}
+];
+let cards=[],selected=null,locked=false,ruleState={};
+const shuffle=a=>[...a].sort(()=>Math.random()-.5);
+function makeCards(){let n=0;cards=[];groups.forEach(g=>g.words.forEach(w=>cards.push({id:"c"+(++n),text:w,answer:g.id,place:"bank"})));cards=shuffle(cards)}
+function build(){
+ document.querySelector("#board").innerHTML=groups.map(g=>`<section class="case" id="box-${g.id}">
+ <h2>${g.title}</h2><p>${g.q}</p>
+ <div class="rule">형태를
+ <button class="choice" data-rule="${g.id}" data-val="true">밝혀 적는다</button>
+ <span>/</span><button class="choice" data-rule="${g.id}" data-val="false">밝혀 적지 아니한다</button>
+ </div><div class="msg" id="msg-${g.id}"></div>
+ <div class="slots" data-drop="${g.id}">${Array.from({length:g.words.length},(_,i)=>`<div class="slot" data-slot="${i}"></div>`).join("")}</div></section>`).join("");
+ document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>answerRule(b));
+ document.querySelectorAll(".slots").forEach(z=>{z.ondragover=e=>e.preventDefault();z.ondrop=e=>{e.preventDefault();move(e.dataTransfer.getData("text"),z.dataset.drop)};z.onclick=()=>{if(selected)move(selected,z.dataset.drop)}});
+ render();
+}
+function answerRule(b){
+ const g=groups.find(x=>x.id===b.dataset.rule), val=b.dataset.val==="true", msg=document.querySelector("#msg-"+g.id);
+ document.querySelectorAll(`[data-rule="${g.id}"]`).forEach(x=>x.classList.remove("good","bad"));
+ if(val===g.rule){b.classList.add("good");msg.className="msg ok";msg.textContent="○ 맞았습니다.";ruleState[g.id]=true}
+ else{b.classList.add("bad");msg.className="msg no";msg.textContent="× 틀렸습니다.";ruleState[g.id]=false}
+}
+function cardEl(c){
+ let d=document.createElement("div");d.className="word";d.textContent=c.text;d.draggable=!locked;
+ d.ondragstart=e=>e.dataTransfer.setData("text",c.id);
+ d.onclick=e=>{e.stopPropagation();if(locked)return;if(c.place==="bank"){selected=c.id;document.querySelectorAll(".word").forEach(x=>x.style.outline="");d.style.outline="3px solid #91a7ff"}else{c.place="bank";selected=null;render()}};
+ return d;
+}
+function render(){
+ const bank=document.querySelector("#bank");bank.innerHTML="";
+ document.querySelectorAll(".slots").forEach(z=>{z.innerHTML="";let g=groups.find(x=>x.id===z.dataset.drop);for(let i=0;i<g.words.length;i++){let s=document.createElement("div");s.className="slot";z.appendChild(s)}});
+ cards.forEach(c=>{let el=cardEl(c);if(c.place==="bank")bank.appendChild(el);else{let slots=[...document.querySelector(`[data-drop="${c.place}"]`).children];let target=slots.find(x=>!x.firstChild);if(target){target.classList.add("filled");target.appendChild(el)}}});
+ document.querySelector("#left").textContent=`(${cards.filter(c=>c.place==="bank").length}개 남음)`;
+}
+function wrongDrop(to){
+ let box=document.querySelector("#box-"+to);box.classList.remove("shake");void box.offsetWidth;box.classList.add("shake");
+ let t=document.createElement("div");t.className="toast";t.textContent="틀렸습니다";document.body.appendChild(t);setTimeout(()=>t.remove(),700);
+}
+function move(id,to){
+ if(locked||!id)return;
+ let c=cards.find(x=>x.id===id);if(!c)return;
+ let cap=groups.find(g=>g.id===to).words.length;
+ if(cards.filter(x=>x.place===to).length>=cap)return;
+ if(c.answer!==to){selected=null;wrongDrop(to);render();return}
+ c.place=to;selected=null;render();
+ if(cards.every(x=>x.place!=="bank")){
+   let r=document.querySelector("#result");r.style.display="block";r.className="result okbox";
+   r.innerHTML="완벽합니다. <b>모든 낱말을 정확하게 분류했습니다.</b>";
+ }
+}
+document.querySelector("#reset").onclick=()=>{locked=false;selected=null;ruleState={};cards.forEach(c=>c.place="bank");document.querySelectorAll(".case").forEach(x=>x.classList.remove("correct","wrong"));document.querySelector("#result").style.display="none";build()}
+makeCards();build();
+</script></body></html>
